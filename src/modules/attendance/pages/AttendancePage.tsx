@@ -1,0 +1,12 @@
+import { Link, useParams } from 'react-router-dom'
+import { classes, DEMO_DATE, useClassSummaries } from '@/shared/data/demo'
+import { Badge, Card, DataTable, PageHeading, StateMessage } from '@/shared/ui/primitives'
+import { Button } from '@/shared/ui/button'
+export function AttendancePage({ teacher = false }: { teacher?: boolean }) {
+  const summaries = useClassSummaries()
+  const visible = teacher ? summaries.slice(0, 1) : summaries
+  return <><PageHeading title={teacher ? 'Minhas turmas' : 'Chamadas e frequência'} description="Uma chamada por turma e data de atividade. Turnos têm acompanhamento independente." />
+    {teacher ? <div className="two-columns">{visible.map(c => <Card key={c.id} className="teacher-class-card"><Badge tone="blue">{c.shift}</Badge><h2>{c.workshop}</h2><p>12 de novembro de 2026 · {c.enrolled} alunos</p><Badge tone="success">{c.attendance}</Badge><Button asChild><Link to={`/professor/turmas/${c.id}/chamadas/${DEMO_DATE}`}>Consultar chamada</Link></Button></Card>)}</div> : <Card><div className="card-heading"><h2>12 de novembro de 2026</h2><Badge tone="blue">Consulta demonstrativa</Badge></div><DataTable caption="Chamadas por turma e data" columns={['Turma', 'Turno', 'Situação', 'Atividade']} rows={visible.map(c => [c.workshop, c.shift, <Badge tone={c.attendance === 'Pendente' ? 'warning' : c.attendance === 'Concluída' ? 'success' : 'neutral'}>{c.attendance}</Badge>, c.activityToday ? 'Chamada diária' : 'Sem pendência'])} /></Card>}
+    <p className="table-note">Não há geração automática de faltas. Dias sem atividade não geram pendências.</p></>
+}
+export function TeacherCallPage() { const { turmaId, chamadaId } = useParams(); if (turmaId !== classes[0].id) return <StateMessage state="denied" />; if (chamadaId !== DEMO_DATE) return <StateMessage state="empty" />; return <><PageHeading title="Chamada diária" description="Oficina demonstrativa 01 · Matutino · 12/11/2026" /><Card><div className="card-heading"><h2>Registro demonstrativo</h2><Badge tone="success">Concluída</Badge></div><DataTable caption="Exemplo fictício de frequência" columns={['Aluno', 'Marcação']} rows={Array.from({ length: 20 }, (_, i) => [`Aluno fictício ${String(i + 1).padStart(2, '0')}`, <Badge tone="success">Presença</Badge>])} /><p className="table-note">Consulta de exemplo. O registro e a correção com motivo e histórico serão integrados em uma próxima etapa.</p></Card></> }

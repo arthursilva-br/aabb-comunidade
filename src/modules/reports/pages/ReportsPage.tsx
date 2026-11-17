@@ -1,0 +1,2 @@
+import { Card, PageHeading, Badge } from '@/shared/ui/primitives'
+export function ReportsPage() { return <><PageHeading title="Relatórios" description="Visões previstas para apoiar a gestão administrativa e pedagógica." /><div className="two-columns">{['Alunos por oficina', 'Vagas', 'Matrículas', 'Desligamentos', 'Frequência', 'Chamadas pendentes', 'Materiais entregues'].map(title => <Card className="report-card" key={title}><h2>{title}</h2><p>Filtros e formato aguardam validação.</p><Badge>Em preparação</Badge></Card>)}</div></> }
