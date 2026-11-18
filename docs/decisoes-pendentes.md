@@ -1,5 +1,10 @@
 # Decisões pendentes após a consolidação oficial
 
+## Consolidação oficial de 18/11/2026
+
+As [AD-01 a AD-12 estão aprovadas](decisoes-administrativas-aprovadas.md), integralmente descritas na referência central. Menções abaixo a AD ainda não aprovada ou parâmetro dependente de aprovação são registro do planejamento de 17/11/2026, substituído por essa consolidação. Permanecem pendentes a execução técnica e as validações institucionais expressamente enumeradas na AD-09. Aprovação não comprova funcionalidade implementada. RN-01 a RN-27 e materiais permanecem preservados.
+
+
 As decisões RN-01 a RN-27 foram aprovadas em [decisoes-aprovadas.md](decisoes-aprovadas.md). As propostas abaixo continuam **NÃO APROVADAS**. As prioridades indicam impacto na modelagem ou na validação do sistema.
 
 ## Pendências resolvidas pela versão 1.0
@@ -114,3 +119,7 @@ As decisões RN-01 a RN-27 foram aprovadas em [decisoes-aprovadas.md](decisoes-a
 | Crítica | Requisitos concretos de autenticação, sessão, recuperação e auditoria. | Validar parâmetros antes do desenho técnico. | Segurança e rastreabilidade. |
 | Importante | Infraestrutura, frequência e retenção dos backups e testes de restauração. | Escolher após avaliar o plano disponível. | Recuperação efetiva sem presumir recursos. |
 | Importante | Hospedagem, desempenho, disponibilidade e implantação. | Avaliar opções após validar requisitos. | Arquitetura e operação. |
+
+## Atualização aplicável ao planejamento
+
+Decisões resolvidas: campos/ciclo/transferência/espera (AD-01–03), calendário e docentes (AD-04–06), fontes e lotes (AD-07), relatórios/indicadores/CSV (AD-08), regras operacionais de privacidade/sessão/infraestrutura/piloto (AD-09–12). As tabelas históricas abaixo não reabrem essas decisões. Validações institucionais bloqueantes: todas as condições da AD-09, responsáveis reais, retenção, fornecedores, custos e recuperação. Tarefas técnicas: modelo, contratos, Auth/RLS, transações, auditoria, relatórios, importação, testes e homologação. Pendências de materiais permanecem futuras e não bloqueiam o MVP.
