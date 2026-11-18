@@ -78,4 +78,6 @@ estão nos documentos novos; os planos anteriores permanecem como referência hi
 
 ## Atualização aplicável ao planejamento
 
+[Implementação 04 — fundação PostgreSQL e Supabase](implementacao-04-backend.md) documenta as migrations, os contratos SQL, as verificações em ambiente fictício e os limites da integração Auth.
+
 Referência central: [Decisões administrativas aprovadas](decisoes-administrativas-aprovadas.md). Consultar seu quadro de reconciliação com todas as RN e as condições bloqueantes antes de dados reais.
