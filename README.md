@@ -6,11 +6,11 @@ Comunidade de Paracatu–MG. Referência principal: `AGENTS.md` e o índice em
 
 ## Estado do projeto
 
-**Marco atual: frontend demonstrativo com Gestão de Alunos funcional.**
+**Marco atual: frontend demonstrativo com Alunos, Oficinas, Turmas e Chamadas.**
 O projeto está preparado para versionamento do código e da documentação;
 não está pronto para operação com dados reais ou uso em produção.
 
-Implementações 01 e 02: React + TypeScript + Vite, Tailwind CSS e padrões shadcn/ui.
+Implementações 01, 02 e 03: React + TypeScript + Vite, Tailwind CSS e padrões shadcn/ui.
 Todos os dados são fictícios e ficam apenas na demonstração. Não há Supabase,
 autenticação real, persistência, importação de arquivos ou gravação operacional.
 
@@ -121,4 +121,25 @@ Arquitetura, modelagem e segurança em `docs/` incluem propostas para revisão;
 somente as decisões explicitamente aprovadas constituem regras confirmadas.
 O escopo atual em `AGENTS.md` registra as implementações demonstrativas
 autorizadas nas etapas 01 e 02 e os limites para novas etapas.
+
+
+## Implementação 03
+
+Oficinas, turmas, capacidades, professores autorizados e calendários configuráveis;
+chamadas por turma/data com justificativas, conclusão e correções com histórico.
+Consulte [a entrega e as limitações](docs/implementacao-03-oficinas-chamadas.md).
+
+## Implementação 03.1
+
+Chamada com rascunho automático na sessão, conferência nominal e confirmação final,
+calendário por turma/turno, resumo mensal e atrasos. Consulte o
+[registro da entrega](docs/implementacao-03-1-melhorias-chamadas.md).
+
+
+## Implementação 03.2
+
+Área docente com [Minhas turmas](http://127.0.0.1:5173/professor/turmas) e
+[Calendário](http://127.0.0.1:5173/professor/calendario) independente, navegação
+inferior no celular, retorno contextual e período operacional fictício explícito.
+Consulte [a entrega](docs/implementacao-03-2-navegacao-docente.md).
 

@@ -1,3 +1,4 @@
+import { createTeachingSeed } from '../../attendance/services/seed'
 import type { StudentsData, Student, SchoolClass } from '../types'
 
 export const DEMO_UNIT = 'unidade-demo'
@@ -24,7 +25,7 @@ export function createStudentsSeed(): StudentsData {
   enrollments.push({ id: 'matricula-demo-desligada', studentId: students[84].id, unitId: DEMO_UNIT, classId: 'turma-demo-02', year: 2026, status: 'desligada', startedAt: '2026-02-02T12:00:00.000Z', endedAt: '2026-10-01T12:00:00.000Z' })
   const waitlist: StudentsData['waitlist'] = [82, 83].map(i => ({ id: `espera-demo-${i}`, studentId: students[i].id, classId: 'turma-demo-03', status: 'aguardando', createdAt: '2026-11-10T12:00:00.000Z' }))
   const actor = 'Administração fictícia · DEMO'
-  return { students, workshops, classes, enrollments, waitlist, events: [
+  return { ...createTeachingSeed(), students, workshops, classes, enrollments, waitlist, events: [
     ...enrollments.flatMap(e => [
       { id: `evento-${e.id}`, studentId: e.studentId, enrollmentId: e.id, type: 'matricula' as const, occurredAt: e.startedAt, actor, description: `Matrícula demonstrativa em ${e.year}.` },
       ...(e.endedAt ? [{ id: `fim-${e.id}`, studentId: e.studentId, enrollmentId: e.id, type: 'desligamento' as const, occurredAt: e.endedAt, actor, description: 'Desligamento fictício confirmado. Cadastro preservado.' }] : []),

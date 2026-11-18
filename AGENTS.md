@@ -2,12 +2,12 @@
 
 ## Escopo atual
 
-Este repositório contém a documentação e as Implementações 01 e 02 autorizadas
-do frontend demonstrativo do Sistema AABB Comunidade, incluindo Gestão de Alunos.
+Este repositório contém a documentação e as Implementações 01, 02 e 03 autorizadas
+do frontend demonstrativo do Sistema AABB Comunidade, incluindo Gestão de Alunos, Oficinas, Turmas e Chamadas demonstrativas.
 As 27 regras da versão 1.0 foram aprovadas; ainda existem decisões abertas.
 Utilize exclusivamente dados fictícios. Novas etapas, integração com Supabase e
 uso operacional dependem de autorização específica. Consulte o estado da entrega
-em `docs/implementacao-02-alunos.md` e preserve os critérios provisórios como tais.
+em `docs/implementacao-03-oficinas-chamadas.md` e `docs/implementacao-02-alunos.md` e preserve os critérios provisórios como tais.
 
 ## Diretrizes de trabalho
 

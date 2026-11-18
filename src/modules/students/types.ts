@@ -1,3 +1,4 @@
+import type { TeachingData } from '../attendance/types'
 export type Shift = 'Matutino' | 'Vespertino'
 export type RegistrationStatus = 'provisorio' | 'validado'
 export interface Guardian { id: string; name: string; relationship: string; phone: string }
@@ -23,7 +24,7 @@ export interface HistoryEvent {
   type: 'cadastro' | 'edicao' | 'matricula' | 'espera' | 'promocao' | 'desligamento'
   occurredAt: string; actor: string; description: string; changes?: string[]
 }
-export interface StudentsData {
+export interface StudentsData extends TeachingData {
   students: Student[]; workshops: Workshop[]; classes: SchoolClass[]
   enrollments: Enrollment[]; waitlist: WaitlistEntry[]; events: HistoryEvent[]
 }
