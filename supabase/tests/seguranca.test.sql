@@ -58,7 +58,8 @@ select teste.verificar((select count(*)=0 from aabb.alunos),'revogação com o m
 reset role;
 select teste.login('diretora');
 set local role authenticated;
-select aabb_api.registrar_atividade();
+select teste.verificar(to_regprocedure('aabb_api.registrar_atividade()') is null,
+  'JWT operacional sozinho não pode prolongar sessões');
 select teste.verificar(exists(select from aabb.alunos where id=teste.id(5)),'sessão ativa');
 reset role;
 update aabb.sessoes set ultima_atividade=statement_timestamp()-interval '30 minutes' where conta_id=teste.id(2);
@@ -66,7 +67,7 @@ set local role authenticated;
 select teste.verificar((select count(*)=0 from aabb.alunos),'inatividade de 30 minutos');
 do $$begin
  begin perform aabb_api.registrar_atividade(); raise exception 'Reativação indevida';
- exception when insufficient_privilege then null; end;
+ exception when undefined_function then null; end;
 end $$;
 reset role;
 update aabb.sessoes set ultima_atividade=clock_timestamp() where conta_id=teste.id(2);

@@ -65,6 +65,7 @@ try {
     foreach ($file in $migrations) {
         Invoke-SqlFile $file.FullName
     }
+    Invoke-SqlFile "$PSScriptRoot/../operacao/verificar-privilegios.sql"
     Invoke-SqlFile "$PSScriptRoot/dados_fixture.sql"
     foreach ($file in $sqlTests) {
         Invoke-SqlFile $file.FullName

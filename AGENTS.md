@@ -2,12 +2,9 @@
 
 ## Escopo atual
 
-Este repositório contém a documentação e as Implementações 01, 02 e 03 autorizadas
-do frontend demonstrativo do Sistema AABB Comunidade, incluindo Gestão de Alunos, Oficinas, Turmas e Chamadas demonstrativas.
-As 27 regras da versão 1.0 foram aprovadas; ainda existem decisões abertas.
-Utilize exclusivamente dados fictícios. Novas etapas, integração com Supabase e
-uso operacional dependem de autorização específica. Consulte o estado da entrega
-em `docs/implementacao-03-oficinas-chamadas.md` e `docs/implementacao-02-alunos.md` e preserve os critérios provisórios como tais.
+Este repositório contém a documentação, o frontend demonstrativo das Implementações 01, 02, 03, 03.1 e 03.2 e a fundação PostgreSQL e Supabase entregue na Implementação 04. A Implementação 05.1.1 prepara a homologação de Supabase Auth e Data API no DEV institucional. A aplicação das migrations e os ensaios hospedados dependem de autorização específica para a Implementação 05.2. Consulte `docs/implementacao-05-1-1-bloqueios-supabase.md` para a sequência e os critérios de liberação.
+As RN-01 a RN-27 e as AD-01 a AD-12 estão aprovadas. Consulte `docs/decisoes-administrativas-aprovadas.md` para as decisões administrativas e as validações institucionais ainda necessárias.
+Utilize exclusivamente dados fictícios. O uso de dados reais continua bloqueado. Novas etapas, integrações além da homologação local autorizada e uso operacional dependem de autorização específica. Consulte `docs/implementacao-02-alunos.md`, `docs/implementacao-03-oficinas-chamadas.md`, `docs/implementacao-04-backend.md` e `docs/implementacao-05-auth-data-api.md` para o estado das entregas e preserve os critérios provisórios como tais.
 
 ## Diretrizes de trabalho
 

@@ -3,10 +3,13 @@
 create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;
+create role supabase_auth_admin nologin;
 create schema auth;
 create table auth.users (
   id uuid primary key,
-  email text unique
+  email text unique,
+  encrypted_password text,
+  raw_app_meta_data jsonb
 );
 create table auth.sessions (
   id uuid primary key,
@@ -22,3 +25,5 @@ language sql stable as $$
   select (auth.jwt()->>'sub')::uuid
 $$;
 grant usage on schema auth to anon, authenticated, service_role;
+grant usage on schema auth to supabase_auth_admin;
+grant select (id), update (encrypted_password) on auth.users to supabase_auth_admin;

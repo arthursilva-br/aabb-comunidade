@@ -37,6 +37,11 @@ de gestão administrativa e pedagógica da AABB Comunidade de Paracatu–MG.
 - [Implementação 03 — Oficinas, turmas e chamadas](implementacao-03-oficinas-chamadas.md).
 - [Implementação 03.1 — Melhorias no módulo de chamadas](implementacao-03-1-melhorias-chamadas.md).
 - [Implementação 03.2 — Navegação docente](implementacao-03-2-navegacao-docente.md).
+- [Implementação 04 — Fundação PostgreSQL e Supabase](implementacao-04-backend.md).
+- [Implementação 05 — Supabase Auth e Data API](implementacao-05-auth-data-api.md).
+- [Implementação 05.1 — Auditoria do Supabase hospedado](implementacao-05-1-preparacao-supabase-hospedado.md).
+- [Implementação 05.1.1 — Preparação da homologação hospedada](implementacao-05-1-1-bloqueios-supabase.md).
+- [Implementação 05.1.2 — Versionamento e pré-implantação do DEV](implementacao-05-1-2-pre-implantacao-dev.md).
 
 ### Preparação para o lançamento — Etapa 01 (17/11/2026)
 
@@ -55,15 +60,14 @@ de gestão administrativa e pedagógica da AABB Comunidade de Paracatu–MG.
 
 As 27 decisões de negócio da versão 1.0 permanecem válidas. Há frontend
 demonstrativo das Implementações 01, 02, 03, 03.1 e 03.2, com dados fictícios
-em memória, sem banco, autenticação real ou liberação para produção.
+em memória. A fundação PostgreSQL e a integração local de identidade são independentes do demonstrativo. A evidência de cada entrega e os limites da homologação constam nos documentos das Implementações 04 e 05.
 A auditoria de 17/11/2026 verificou 102 testes locais e o build; isso não comprova
 segurança, persistência ou operação multiusuário.
 
 A prioridade autorizada passou a ser preparar o MVP operacional, importar os
 cadastros/vínculos de 2026 e permitir rematrícula administrativa de 2027.
 Uniformes, materiais e kits ficam adiados do lançamento, preservando integralmente
-suas regras e propostas. Os novos documentos são análise e planejamento para
-aprovação; nenhuma integração, conta real, carga ou implantação foi executada.
+suas regras e propostas. A integração autorizada usa somente dados fictícios em desenvolvimento local. Conta real, carga e implantação dependem das validações e autorizações próprias.
 As escolhas temporárias da demonstração e as propostas técnicas não aprovam
 pendências de negócio. O recorte de lançamento e a ordem proposta para o MVP
 estão nos documentos novos; os planos anteriores permanecem como referência histórica.
