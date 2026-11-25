@@ -1,0 +1,80 @@
+name: CI - AABB Comunidade
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend - testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  migrations:
+    name: PostgreSQL 17 - reconstruir banco vazio
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-only-database-password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ci-only-database-password
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Preparar fixture fictícia e reconstruir todas as migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/auth_fixture.sql
+          while IFS= read -r migration; do
+            echo "Aplicando ${migration}"
+            psql -X -v ON_ERROR_STOP=1 -f "${migration}"
+          done < <(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | LC_ALL=C sort)
+      - name: Verificar privilégios e controles SQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 -f supabase/operacao/verificar-privilegios.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/dados_fixture.sql
+          while IFS= read -r suite; do
+            echo "Testando ${suite}"
+            psql -X -v ON_ERROR_STOP=1 -f "${suite}"
+          done < <(find supabase/tests -maxdepth 1 -type f -name '*.test.sql' | LC_ALL=C sort)
