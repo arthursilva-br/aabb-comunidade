@@ -70,6 +70,16 @@ Iniciar com no máximo duas alterações funcionais paralelas, um testador e um 
 4. Nenhum merge equivale a autorização de deploy, migration hospedada ou uso de dados reais.
 5. Para iniciar as próximas integrações funcionais, resolver a B6 e demonstrar Auth/JWT real com escopos definidos.
 
+## Evidências CI da PR #1
+
+Primeira execução: https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45523122713
+
+- Job frontend passou: npm ci, npm test e npm run build.
+- Job PostgreSQL 17 iniciou o serviço, instalou cliente, mas falhou na etapa de aplicação de migrations. Os testes SQL posteriores foram ignorados por dependência. O conector GitHub não disponibilizou o texto do log de falha.
+- Em 06.2.1, o workflow foi refinado para aplicar as cinco migrations originais de modo explícito e só depois executar a sexta correção histórica. Mantém-se falha bloqueante para a sexta e não se criam grants anônimos artificiais.
+- Resultado da nova execução deve ser lido antes de aprovar qualquer alteração na migration. O problema específico não fica demonstrado enquanto os passos não indicarem onde falhou.
+- Não editar ou substituir a sexta migration já aplicada remotamente até aprovar formalmente uma estratégia de correção e reprodutibilidade.
+
 ## Resultado e próxima verificação
 
 Verificar que os dois jobs realmente iniciaram no GitHub Actions, coletar URLs e logs, registrar a falha/passe de cada um e preparar uma resolução reproduzível para a sexta migration antes de liberar merge. Esta alteração não comprova execução bem-sucedida no ambiente remoto.
