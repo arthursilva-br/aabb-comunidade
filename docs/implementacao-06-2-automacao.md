@@ -83,3 +83,15 @@ Primeira execução: https://github.com/arthursilva-br/aabb-comunidade/actions/r
 ## Resultado e próxima verificação
 
 Verificar que os dois jobs realmente iniciaram no GitHub Actions, coletar URLs e logs, registrar a falha/passe de cada um e preparar uma resolução reproduzível para a sexta migration antes de liberar merge. Esta alteração não comprova execução bem-sucedida no ambiente remoto.
+
+
+## Implementação 06.2.2 — correção histórica autorizada
+
+Em 24/11/2026 o operador autorizou expressamente a alteração mínima da sexta migration, sem merge ou acesso ao DEV. Run anterior: https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45523403399. Erro confirmado: `B6 privilege precondition failed: functions 13, anon 0, authenticated 13`. As cinco primeiras migrations e 102 testes frontend passaram; verificador ACL e suítes SQL foram bloqueados.
+
+- Versão preservada: `20261124191532_revoga_execute_anon_aabb_api.sql`.
+- Original preservado no commit `2d8c086020fc67c18b06701f3e189e2274427a37`, blob `974d292d6ca30c72c3ed88261fb5d824e78ca1d5`.
+- Correção: commit `790050194ed8d71fcb4f8b2319aa724abe2cfe5c`, blob `fddd1e5f2fdddf321bfa69b3dceff5775076b18c`.
+- Única alteração SQL: remover `OR anon_total <> 13` da pré-condição. Mantidos total 13, authenticated 13, REVOKE e pós-condição anon 0/authenticated 13. Não introduzir grants artificiais.
+- O conteúdo versionado diverge deliberadamente do SQL histórico aplicado no DEV; a equivalência do estado final deve ser comprovada pelo CI e pelo verificador de privilégios. Não reexecutar, reparar ou alterar o histórico remoto. As cinco migrations anteriores permanecem intactas.
+- Aguardam evidências do novo CI e revisão independente. Concorrência PowerShell não integrada ao workflow atual; JWT real e Data API continuam fora do escopo. Nenhuma autorização para merge, deploy ou dados reais.
