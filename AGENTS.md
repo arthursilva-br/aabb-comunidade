@@ -2,7 +2,7 @@
 
 ## Escopo atual
 
-Este repositório contém a documentação, o frontend demonstrativo das Implementações 01, 02, 03, 03.1 e 03.2 e a fundação PostgreSQL e Supabase entregue na Implementação 04. A Implementação 05.1.1 prepara a homologação de Supabase Auth e Data API no DEV institucional. A aplicação das migrations e os ensaios hospedados dependem de autorização específica para a Implementação 05.2. Consulte `docs/implementacao-05-1-1-bloqueios-supabase.md` para a sequência e os critérios de liberação.
+Este repositório contém a documentação, o frontend demonstrativo das Implementações 01, 02, 03, 03.1 e 03.2 e a fundação PostgreSQL e Supabase entregue na Implementação 04. Em 24/11/2026 foram aplicadas seis migrations no Supabase DEV `rpjrvbuxrfvhiqbrsqmj`, mas a homologação HTTP/JWT da Implementação 05.2 não foi concluída. A Data API permanece desligada por decisão de contenção, após correção de privilégios de `anon`. Consulte `docs/implementacao-05-1-1-bloqueios-supabase.md` e `docs/implementacao-06-2-automacao.md` para histórico, bloqueios e fluxo de desenvolvimento. Nenhuma API hospedada está liberada para testes com dados reais.
 As RN-01 a RN-27 e as AD-01 a AD-12 estão aprovadas. Consulte `docs/decisoes-administrativas-aprovadas.md` para as decisões administrativas e as validações institucionais ainda necessárias.
 Utilize exclusivamente dados fictícios. O uso de dados reais continua bloqueado. Novas etapas, integrações além da homologação local autorizada e uso operacional dependem de autorização específica. Consulte `docs/implementacao-02-alunos.md`, `docs/implementacao-03-oficinas-chamadas.md`, `docs/implementacao-04-backend.md` e `docs/implementacao-05-auth-data-api.md` para o estado das entregas e preserve os critérios provisórios como tais.
 
@@ -44,3 +44,16 @@ Utilize exclusivamente dados fictícios. O uso de dados reais continua bloqueado
   têm motivo opcional, correções/estornos exigem motivo. Não duplicar saldo de kit
   e componentes. Consulte a proposta técnica em `docs/modelo-dados.md`.
 
+
+## Desenvolvimento paralelo e automação (Implementação 06.2)
+
+- A tarefa autorizada determina os arquivos, critérios de aceite, testes e fronteiras. Não interpretar uma tarefa de análise como autorização de mudanças.
+- Cada agente implementador usa branch `feat/*`, `fix/*` ou `chore/*` e worktree isolada quando disponível; nunca edita a mesma árvore de trabalho simultaneamente com outro agente.
+- Contratos, schema e arquivos compartilhados têm responsável único por rodada. Mudança necessária fora da área autorizada deve ser comunicada ao coordenador, não realizada silenciosamente.
+- Um agente de testes pode escrever testes em branch própria; auditoria de segurança atua por padrão somente em leitura e não modifica permissões.
+- Não fazer push direto em `main`, merge automático, deploy, criação de usuários, alteração de configurações/Auth/Data API, execução de migrations no DEV hospedado ou acesso a dados reais sem autorização explícita, específica e atual.
+- CI de PR faz testes/frontend e reconstrução PostgreSQL descartável com `auth_fixture.sql`; nenhum segredo do Supabase nem conectividade com o DEV hospedado é necessário.
+- `supabase/migrations/20261124191532_revoga_execute_anon_aabb_api.sql` depende de um estado transitório criado no Dashboard. Reconstrução desde zero pode falhar: tratar como **bloqueio de reprodutibilidade**; não suprimir o teste, fabricar grants na fixture para mascarar o problema nem editar migrations já aplicadas sem revisão explícita de estratégia.
+- PR deve conter escopo, RN/AD aplicáveis, arquivos alterados, evidências de testes, riscos/pendências e confirmação de que dados fictícios foram utilizados.
+- Revisor diferente do implementador valida os resultados. Resultado CI verde não substitui homologação institucional, testes de JWT real ou aprovação de segurança.
+- Consulte `docs/implementacao-06-2-automacao.md` antes de iniciar tarefas paralelas.
