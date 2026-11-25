@@ -3,14 +3,15 @@ $ErrorActionPreference = 'Stop'
 if ($env:PGHOST -ne '127.0.0.1' -or $env:PGUSER -ne 'aabb_teste') {
     throw 'Execute pelo runner de banco isolado.'
 }
+$psql = (Get-Command psql -CommandType Application -ErrorAction Stop).Source
 function Invoke-TestSql([string]$Sql) {
-    $result = & psql.exe -X -w -qAt -v ON_ERROR_STOP=1 -c $Sql
+    $result = & $psql -X -w -qAt -v ON_ERROR_STOP=1 -c $Sql
     if ($LASTEXITCODE -ne 0) { throw 'Falha no SQL de preparação ou conferência.' }
     return $result
 }
 function Start-Session([string]$Name) {
     $info = [Diagnostics.ProcessStartInfo]::new()
-    $info.FileName = 'psql.exe'
+    $info.FileName = $psql
     $info.Arguments = '-X -w -qAt -v ON_ERROR_STOP=1'
     $info.UseShellExecute = $false
     $info.CreateNoWindow = $true
@@ -50,6 +51,7 @@ try {
     $contender.StandardInput.WriteLine("begin; select set_config('request.jwt.claims',jsonb_build_object('sub',teste.id(304),'session_id',teste.id(305))::text,false); set local role authenticated; select aabb_api.movimentar_matricula(teste.id(307),'matricular',teste.id(303),teste.id(302)); commit;")
     $contender.StandardInput.Close()
     Wait-Condition "select exists(select from pg_stat_activity where application_name='aabb-vaga-B' and wait_event_type='Lock' and query like '%movimentar_matricula%')"
+    Write-Host 'Bloqueio real observado em pg_stat_activity; liberando a transação vencedora.'
     $winner.StandardInput.WriteLine('commit;')
     $winner.StandardInput.Close()
     if (!$winner.WaitForExit(10000) -or $winner.ExitCode -ne 0) { throw 'Falha no primeiro commit.' }
@@ -59,6 +61,21 @@ try {
     if ((Invoke-TestSql "select count(*) from aabb.matriculas where turma_id=teste.id(302) and estado='ativa'") -ne '1') {
         throw 'Ocupação divergente após os commits.'
     }
+    $consistent = Invoke-TestSql @'
+select
+ (select count(*) from aabb.matriculas where turma_id=teste.id(302) and aluno_id=teste.id(5) and estado='ativa')=1
+ and (select count(*) from aabb.matriculas where turma_id=teste.id(302))=1
+ and not exists(select from aabb.matriculas where aluno_id=teste.id(303))
+ and (select count(*) from aabb.vinculos_matricula v join aabb.matriculas m on m.id=v.matricula_id where v.turma_id=teste.id(302) and v.aluno_id=teste.id(5) and v.aberto and m.estado='ativa')=1
+ and (select count(*) from aabb.vinculos_matricula where turma_id=teste.id(302))=1
+ and not exists(select from aabb.vinculos_matricula where aluno_id=teste.id(303))
+ and (select count(*) from aabb.movimentos where chave=teste.id(306) and aluno_id=teste.id(5) and destino_id=teste.id(302))=1
+ and not exists(select from aabb.movimentos where chave=teste.id(307) or aluno_id=teste.id(303))
+ and not exists(select from aabb.auditoria where autor_id=teste.id(304) and entidade in ('matriculas','vinculos_matricula','movimentos','espera'))
+ and not exists(select from aabb.espera where turma_id=teste.id(302));
+'@
+    if ($consistent -ne 't') { throw 'Registros parciais ou inconsistentes após disputa.' }
+    Write-Host 'Integridade confirmada: uma matrícula, um vínculo, um movimento vencedor; nenhuma escrita parcial do concorrente.'
     Write-Host 'Disputa da última vaga confirmada com dois administradores em sessões simultâneas.'
 } finally {
     foreach ($process in @($winner,$contender)) {
