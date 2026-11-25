@@ -21,6 +21,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -37,24 +39,26 @@ jobs:
       postgres:
         image: postgres:17
         env:
-          POSTGRES_USER: postgres
+          POSTGRES_USER: aabb_teste
           POSTGRES_PASSWORD: ci-only-database-password
           POSTGRES_DB: postgres
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U postgres"
+          --health-cmd "pg_isready -U aabb_teste"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
     env:
       PGHOST: 127.0.0.1
       PGPORT: '5432'
-      PGUSER: postgres
+      PGUSER: aabb_teste
       PGPASSWORD: ci-only-database-password
       PGDATABASE: postgres
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Instalar cliente PostgreSQL
         run: |
           sudo apt-get update
@@ -88,7 +92,7 @@ jobs:
           fi
           echo "MIGRATION_CORRECAO: 20261124191532_revoga_execute_anon_aabb_api.sql"
           psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261124191532_revoga_execute_anon_aabb_api.sql
-          echo "Se esta etapa falhar, conferir a pré-condição de anon nas 13 RPCs. Não simular grants do Dashboard." >> "$GITHUB_STEP_SUMMARY"
+          echo "Sexta migration reconstruída; privilégios serão verificados a seguir." >> "$GITHUB_STEP_SUMMARY"
       - name: Verificar privilégios e controles SQL
         shell: bash
         run: |
@@ -99,3 +103,10 @@ jobs:
             echo "Testando ${suite}"
             psql -X -v ON_ERROR_STOP=1 -f "${suite}"
           done < <(find supabase/tests -maxdepth 1 -type f -name '*.test.sql' | LC_ALL=C sort)
+      - name: Disputar última vaga em sessões PostgreSQL simultâneas
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:PGHOST -ne '127.0.0.1' -or $env:PGUSER -ne 'aabb_teste' -or $env:PGDATABASE -ne 'postgres') { throw 'Banco CI inesperado.' }
+          pwsh -NoProfile -File supabase/tests/matriculas_concorrencia.test.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Teste concorrente reprovado.' }
