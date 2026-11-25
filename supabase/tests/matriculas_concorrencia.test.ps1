@@ -3,7 +3,7 @@ $ErrorActionPreference = 'Stop'
 if ($env:PGHOST -ne '127.0.0.1' -or $env:PGUSER -ne 'aabb_teste') {
     throw 'Execute pelo runner de banco isolado.'
 }
-$psql = (Get-Command psql -CommandType Application -ErrorAction Stop).Source
+$psql = @(Get-Command psql -CommandType Application -ErrorAction Stop)[0].Source
 function Invoke-TestSql([string]$Sql) {
     $result = & $psql -X -w -qAt -v ON_ERROR_STOP=1 -c $Sql
     if ($LASTEXITCODE -ne 0) { throw 'Falha no SQL de preparação ou conferência.' }
