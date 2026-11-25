@@ -1,35 +1,31 @@
 # Implementação 06.2 — CI e infraestrutura mínima de agentes
 
-Data: 24/11/2026. Status: proposta implementada em branch isolada; depende de verificações do GitHub Actions e revisão antes do merge.
+O CI de referência da PR #1 foi homologado no commit `a1b27e30582e60eef6cfd925cd7af728096701a6`. A aprovação formal independente está pendente. O merge depende de autorização humana.
 
 ## Objetivo e limites
 
-Estabelecer qualidade reproduzível e regras para execução paralela de agentes na AABB Comunidade, **sem** desenvolver funcionalidades novas, executar migrations no Supabase hospedado, habilitar Data API, criar contas ou usar dados reais.
+Estabelecer verificações reproduzíveis e regras para execução paralela de agentes na AABB Comunidade. O CI usa dados fictícios, runners hospedados, token com `contents: read` e checkout sem persistência de credenciais. As verificações rodam em ambiente descartável, sem credenciais do Supabase ou ambiente de implantação.
 
-Referências normativas: `AGENTS.md`, `docs/decisoes-aprovadas.md` (RN-01 a RN-27), `docs/decisoes-administrativas-aprovadas.md` (AD-01 a AD-12), `docs/plano-implementacao-mvp.md` (T01–T27) e `docs/criterios-homologacao-mvp.md` (portões A e B).
+Referências normativas — [orientações para agentes](../AGENTS.md), [RN-01 a RN-27](decisoes-aprovadas.md), [AD-01 a AD-12](decisoes-administrativas-aprovadas.md), [plano do MVP](plano-implementacao-mvp.md) e [portões A e B](criterios-homologacao-mvp.md).
 
-## Estado verificado de partida
+## Estado de partida e limite da homologação
 
-- `main` no commit `32aab13395a6ab46fa94df3f352c07d96a093669`.
-- Seis migrations aplicadas no projeto exclusivamente DEV `rpjrvbuxrfvhiqbrsqmj`; B6 HTTP/JWT ainda pendente; Data API mantida desativada por contenção.
-- `aabb_api` tem 13 RPCs; o estado verificado após a sexta migration era 0 EXECUTE para anon, 13 para authenticated. Essa observação não é uma autorização para reativação.
-- Frontend demonstrativo e suítes `npm test`, `npm run build`; PostgreSQL e testes SQL locais são independentes da hospedagem.
-- A migration `20261124191532_revoga_execute_anon_aabb_api.sql` exige previamente 13 grants a anon. Essa condição pode não existir quando o banco é criado apenas com as migrations, o que caracteriza risco de reprodução.
+- A base da PR #1 é a `main` no commit `32aab13395a6ab46fa94df3f352c07d96a093669`.
+- O histórico do Supabase DEV registra seis migrations aplicadas. A conferência após a sexta registrou 13 RPCs em `aabb_api`, com zero funções executáveis por `anon` e 13 por `authenticated`.
+- A Data API do DEV permanece desativada por contenção. A homologação B6 com HTTP e JWT real segue pendente em etapa separada. As suítes SQL do CI usam uma fixture de Auth e exercitam os papéis no PostgreSQL.
 
-## CI introduzido
+## CI da PR #1
 
-Arquivo: `.github/workflows/ci.yml`. Gatilhos: PR para main, push em main e execução manual. Permissões de workflow: `contents: read`; sem secrets, sem ambiente de implantação e sem acesso remoto ao Supabase.
+O workflow roda em PRs para `main`, em push para `main` e por execução manual.
 
-1. Job **frontend**: checkout, Node 24, `npm ci`, `npm test`, `npm run build`. Falhas bloqueiam a conclusão do job.
-2. Job **migrations**: PostgreSQL 17 como serviço descartável, `auth_fixture.sql`, todas as migrations em ordem nominal, verificador de privilégios, `dados_fixture.sql` e suítes `*.test.sql`. Se alguma migration falhar, a execução encerra sem declarar sucesso.
-3. O teste concorrente PowerShell `matriculas_concorrencia.test.ps1` e os ensaios JWT reais **não fazem parte desta primeira pipeline**. A inclusão será planejada após o gate de reconstrução do banco passar.
-4. O PostgreSQL do job é efêmero e utiliza somente dados fictícios; não está conectado ao DEV hospedado.
+| Job | Resultado no CI de referência |
+| --- | --- |
+| Frontend | Node 24, `npm ci`, 102 testes em quatro arquivos, `tsc --noEmit` e build Vite aprovados. [Log](https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45528337529/job/138917129617) |
+| PostgreSQL | PostgreSQL 17.12 descartável, reconstrução com seis migrations, verificador de privilégios e cinco suítes SQL aprovados. O teste concorrente observou uma sessão bloqueada enquanto a outra ocupava a última vaga e confirmou a integridade dos registros e da auditoria do concorrente. [Log](https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45528337529/job/138917129967) |
 
-### Bloqueio conhecido
+O [CI de referência](https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45528337529) testou o commit temporário `0d31309`, que combina `a1b27e3` com a base `32aab13`.
 
-A sexta migration contém uma pré-condição dependente da intervenção anterior do Dashboard. O teste do banco vazio pode falhar antes da execução dos testes SQL. Isso é um resultado esperado até a correção **revisada**, não um motivo para remover o job da CI.
-
-A solução deve garantir que bancos novos e o histórico remoto permaneçam semanticamente consistentes. Não reescrever migration já aplicada sem aprovação de estratégia; não mascarar o problema introduzindo permissão indevida a anon na fixture ou desativando o teste.
+Na 06.2.5, o workflow publica o PostgreSQL em `127.0.0.1:5432` no runner e falha se faltar qualquer uma das cinco suítes obrigatórias: chamadas, identidade, identidade hospedada, matrículas ou segurança. Mantém a descoberta de suítes adicionais `*.test.sql`. A descrição da [PR #1](https://github.com/arthursilva-br/aabb-comunidade/pull/1) registra a execução correspondente à ponta após esses ajustes.
 
 ## Organização dos agentes
 
@@ -66,32 +62,30 @@ Iniciar com no máximo duas alterações funcionais paralelas, um testador e um 
 
 1. Testes e build automáticos, incluindo reconstrução do banco, devem passar. Uma verificação falha impede recomendação de merge.
 2. Auditor diferente do implementador confere segurança e requisitos.
-3. Merge em main é ação separada, sujeita à aprovação humana. Configurar branch protection / rulesets apenas com autorização e acesso administrativo apropriado.
-4. Nenhum merge equivale a autorização de deploy, migration hospedada ou uso de dados reais.
+3. O merge em `main` depende de autorização humana. A configuração de proteção da branch e de rulesets requer autorização administrativa.
+4. Deploy, migrations hospedadas e uso de dados reais exigem autorizações específicas.
 5. Para iniciar as próximas integrações funcionais, resolver a B6 e demonstrar Auth/JWT real com escopos definidos.
 
-## Evidências CI da PR #1
+## Histórico de execução
 
-Primeira execução: https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45523122713
+| Execução | Resultado e resolução |
+| --- | --- |
+| [45523122713](https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45523122713) | Frontend aprovado. A primeira reconstrução falhou antes dos testes SQL. A 06.2.1 separou as cinco migrations iniciais da sexta para localizar a etapa que falhava. |
+| [45523403399](https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45523403399/job/138900676121) | As cinco iniciais passaram. A sexta falhou com `B6 privilege precondition failed: functions 13, anon 0, authenticated 13`. O verificador e as suítes SQL ficaram sem executar. A correção autorizada da 06.2.2 resolveu a falha. |
+| [45526107061](https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45526107061) | Os dois jobs passaram após a correção histórica. O workflow dessa execução ainda estava na versão anterior à inclusão do teste concorrente. |
+| [45528020181](https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45528020181/job/138916107685) | A estreia do teste concorrente no CI falhou ao encontrar dois caminhos para `psql`. O commit `a1b27e3` passou a selecionar um único executável e resolveu a falha. |
+| [45528337529](https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45528337529) | Os dois jobs passaram em `a1b27e3`, incluindo a disputa real de vaga. |
 
-- Job frontend passou: npm ci, npm test e npm run build.
-- Job PostgreSQL 17 iniciou o serviço, instalou cliente, mas falhou na etapa de aplicação de migrations. Os testes SQL posteriores foram ignorados por dependência. O conector GitHub não disponibilizou o texto do log de falha.
-- Em 06.2.1, o workflow foi refinado para aplicar as cinco migrations originais de modo explícito e só depois executar a sexta correção histórica. Mantém-se falha bloqueante para a sexta e não se criam grants anônimos artificiais.
-- Resultado da nova execução deve ser lido antes de aprovar qualquer alteração na migration. O problema específico não fica demonstrado enquanto os passos não indicarem onde falhou.
-- Não editar ou substituir a sexta migration já aplicada remotamente até aprovar formalmente uma estratégia de correção e reprodutibilidade.
+### Correção histórica autorizada na 06.2.2
 
-## Resultado e próxima verificação
+Em 24/11/2026 o operador autorizou a correção mínima da migration `20261124191532_revoga_execute_anon_aabb_api.sql`. O original foi preservado no commit `2d8c086020fc67c18b06701f3e189e2274427a37`, blob `974d292d6ca30c72c3ed88261fb5d824e78ca1d5`. O commit `790050194ed8d71fcb4f8b2319aa724abe2cfe5c` contém a correção, blob `fddd1e5f2fdddf321bfa69b3dceff5775076b18c`. [Registro da autorização e publicação](https://github.com/arthursilva-br/aabb-comunidade/pull/1#issuecomment-7149605653)
 
-Verificar que os dois jobs realmente iniciaram no GitHub Actions, coletar URLs e logs, registrar a falha/passe de cada um e preparar uma resolução reproduzível para a sexta migration antes de liberar merge. Esta alteração não comprova execução bem-sucedida no ambiente remoto.
+A mudança removeu apenas a exigência de 13 grants preexistentes para `anon`. A contagem de 13 RPCs, os privilégios de `authenticated`, o `REVOKE` e a pós-condição de zero para `anon` e 13 para `authenticated` foram preservados. O SQL versionado diverge deliberadamente do arquivo aplicado historicamente no DEV. A reconstrução e o verificador de privilégios confirmaram o estado final no PostgreSQL descartável. O arquivo histórico permanece preservado para rastreabilidade. A orientação operacional é preservar o histórico do DEV e evitar reexecução ou reparo da migration aplicada.
 
+## Parecer 06.2.4 e pendências
 
-## Implementação 06.2.2 — correção histórica autorizada
+A revisão técnica em leitura examinou o diff contra `main` e os logs da ponta homologada. O parecer confirmou a reconstrução, os controles de RLS e grants, os testes de auditoria e a disputa de vaga. O diff revisado estava dentro do escopo de infraestrutura e da correção histórica autorizada, com dados fictícios e sem credenciais do DEV. O parecer apontou inconsistências na documentação e ausência de aprovação formal independente. A 06.2.5 corrige a documentação e vincula o parecer à PR. A aprovação formal, por revisor identificável e distinto do implementador, segue pendente.
 
-Em 24/11/2026 o operador autorizou expressamente a alteração mínima da sexta migration, sem merge ou acesso ao DEV. Run anterior: https://github.com/arthursilva-br/aabb-comunidade/actions/runs/45523403399. Erro confirmado: `B6 privilege precondition failed: functions 13, anon 0, authenticated 13`. As cinco primeiras migrations e 102 testes frontend passaram; verificador ACL e suítes SQL foram bloqueados.
+A [API da branch `main`](https://api.github.com/repos/arthursilva-br/aabb-comunidade/branches/main) retornou `protected: false`, com proteção clássica desativada e nenhum check obrigatório. A leitura direta dos rulesets não estava disponível ao conector. Antes de liberar escrita para agentes na 06.3, verificar as regras efetivas e, com autorização, exigir PR, revisão independente e aprovação dos dois jobs. Provisionar uma worktree e uma branch por implementador, com responsável definido para arquivos compartilhados.
 
-- Versão preservada: `20261124191532_revoga_execute_anon_aabb_api.sql`.
-- Original preservado no commit `2d8c086020fc67c18b06701f3e189e2274427a37`, blob `974d292d6ca30c72c3ed88261fb5d824e78ca1d5`.
-- Correção: commit `790050194ed8d71fcb4f8b2319aa724abe2cfe5c`, blob `fddd1e5f2fdddf321bfa69b3dceff5775076b18c`.
-- Única alteração SQL: remover `OR anon_total <> 13` da pré-condição. Mantidos total 13, authenticated 13, REVOKE e pós-condição anon 0/authenticated 13. Não introduzir grants artificiais.
-- O conteúdo versionado diverge deliberadamente do SQL histórico aplicado no DEV; a equivalência do estado final deve ser comprovada pelo CI e pelo verificador de privilégios. Não reexecutar, reparar ou alterar o histórico remoto. As cinco migrations anteriores permanecem intactas.
-- Aguardam evidências do novo CI e revisão independente. Concorrência PowerShell não integrada ao workflow atual; JWT real e Data API continuam fora do escopo. Nenhuma autorização para merge, deploy ou dados reais.
+A preparação da PR termina com a confirmação dos dois jobs na ponta atual. A integração aguarda a aprovação formal e a autorização humana de merge. A homologação B6 segue em etapa própria.

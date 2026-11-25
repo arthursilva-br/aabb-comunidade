@@ -43,7 +43,7 @@ jobs:
           POSTGRES_PASSWORD: ci-only-database-password
           POSTGRES_DB: postgres
         ports:
-          - 5432:5432
+          - '127.0.0.1:5432:5432'
         options: >-
           --health-cmd "pg_isready -U aabb_teste"
           --health-interval 5s
@@ -97,6 +97,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          required_suites=(
+            chamadas
+            identidade
+            identidade_hospedada
+            matriculas
+            seguranca
+          )
+          for suite in "${required_suites[@]}"; do
+            required_path="supabase/tests/${suite}.test.sql"
+            if [[ ! -f "$required_path" ]]; then
+              echo "::error::Suíte SQL obrigatória ausente: $required_path"
+              exit 1
+            fi
+          done
           psql -X -v ON_ERROR_STOP=1 -f supabase/operacao/verificar-privilegios.sql
           psql -X -v ON_ERROR_STOP=1 -f supabase/tests/dados_fixture.sql
           while IFS= read -r suite; do
