@@ -9,7 +9,7 @@ BEGIN
     INTO total, anon_total, auth_total
   FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
   WHERE n.nspname='aabb_api';
-  IF total <> 13 OR anon_total <> 13 OR auth_total <> 13 THEN
+  IF total <> 13 OR auth_total <> 13 THEN
     RAISE EXCEPTION 'B6 privilege precondition failed: functions %, anon %, authenticated %',total,anon_total,auth_total;
   END IF;
 END

@@ -1,0 +1,126 @@
+name: CI - AABB Comunidade
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend - testes e build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+  migrations:
+    name: PostgreSQL 17 - reconstruir banco vazio
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: aabb_teste
+          POSTGRES_PASSWORD: ci-only-database-password
+          POSTGRES_DB: postgres
+        ports:
+          - '127.0.0.1:5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U aabb_teste"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: aabb_teste
+      PGPASSWORD: ci-only-database-password
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+      - name: Validar base original (cinco migrations)
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/auth_fixture.sql
+          for migration in \
+            supabase/migrations/20261118000100_fundacao.sql \
+            supabase/migrations/20261118000200_matriculas.sql \
+            supabase/migrations/20261118000300_chamadas.sql \
+            supabase/migrations/20261118000400_acesso_auditoria.sql \
+            supabase/migrations/20261123000100_integracao_identidade.sql; do
+            test -f "$migration"
+            echo "MIGRATION_BASE: $migration"
+            psql -X -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          echo "Base original reconstruída com sucesso." >> "$GITHUB_STEP_SUMMARY"
+      - name: Reconstruir do zero incluindo a correção histórica
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A base original já foi aplicada no banco descartável neste job.
+          # Exigir uma só correção pós-base e checar todos os arquivos esperados.
+          count="$(find supabase/migrations -maxdepth 1 -type f -name '*.sql' | wc -l)"
+          if [ "$count" -ne 6 ]; then
+            echo "::error::Esperadas exatamente seis migrations versionadas; encontradas $count. Revisar o workflow antes de prosseguir."
+            exit 1
+          fi
+          echo "MIGRATION_CORRECAO: 20261124191532_revoga_execute_anon_aabb_api.sql"
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261124191532_revoga_execute_anon_aabb_api.sql
+          echo "Sexta migration reconstruída; privilégios serão verificados a seguir." >> "$GITHUB_STEP_SUMMARY"
+      - name: Verificar privilégios e controles SQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          required_suites=(
+            chamadas
+            identidade
+            identidade_hospedada
+            matriculas
+            seguranca
+          )
+          for suite in "${required_suites[@]}"; do
+            required_path="supabase/tests/${suite}.test.sql"
+            if [[ ! -f "$required_path" ]]; then
+              echo "::error::Suíte SQL obrigatória ausente: $required_path"
+              exit 1
+            fi
+          done
+          psql -X -v ON_ERROR_STOP=1 -f supabase/operacao/verificar-privilegios.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/dados_fixture.sql
+          while IFS= read -r suite; do
+            echo "Testando ${suite}"
+            psql -X -v ON_ERROR_STOP=1 -f "${suite}"
+          done < <(find supabase/tests -maxdepth 1 -type f -name '*.test.sql' | LC_ALL=C sort)
+      - name: Disputar última vaga em sessões PostgreSQL simultâneas
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:PGHOST -ne '127.0.0.1' -or $env:PGUSER -ne 'aabb_teste' -or $env:PGDATABASE -ne 'postgres') { throw 'Banco CI inesperado.' }
+          pwsh -NoProfile -File supabase/tests/matriculas_concorrencia.test.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Teste concorrente reprovado.' }
